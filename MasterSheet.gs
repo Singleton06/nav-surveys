@@ -1,14 +1,15 @@
 var Model = Model || {};
 
 /**
- * Constructor to create a new MasterSheet object.  The MasterSheet object represents data that
- * all of the sub-sheets will be populated from.  Essentially, this is the sheet where all data is
- * initially dropped into and will then be separated out in category specific sheets.
+ * Constructor to create a new MasterSheet object.
  *
  * @param {GoogleAppsScript.Spreadsheet.Sheet} masterSheet the master sheet to pull all of the
  *                                                         configuration from to construct the
  *                                                         MasterSheet object.
  * @constructor
+ * @classdesc The MasterSheet object represents data that all of the sub-sheets will be populated
+ *   from.  Essentially, this is the sheet where all data is initially dropped into and will then
+ *   be separated out in category specific sheets.
  */
 Model.MasterSheet = function (masterSheet) {
 

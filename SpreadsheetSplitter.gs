@@ -27,9 +27,15 @@ DataProcessing.SpreadsheetSplitter = (function () {
     var categorySpecificSpreadsheets = [];
 
     masterSheetData.allData.forEach(function (currentRow, index) {
+      var category = currentRow[masterSheetData.splittingColumnIndex];
+      if (category === '') {
+        return;
+      }
 
+      if (categorySpecificSpreadsheets[category] === undefined) {
+        categorySpecificSpreadsheets[category] = new Model.CategorySpecificSpreadsheet(category, )
+      }
     });
-
   };
 
   /**
