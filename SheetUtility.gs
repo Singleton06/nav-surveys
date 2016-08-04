@@ -2,11 +2,31 @@ var SheetUtility = {
   /**
    * Gets the column titles from the specified sheet.
    *
-   * @param {Sheet} sheet the sheet to inspect for the column titles.
+   * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet the sheet to inspect for the column titles.
    * @returns {Array} an array representing the column titles.
    */
-  getColumnTitles: function (sheet) {
-    return sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues();
+  getColumnTitlesAsArray: function (sheet) {
+    var values = SheetUtility.getColumnTitlesAsRange(sheet).getValues()[0];
+    if (values.length === 1 && values[0] === '') {
+      return [];
+    }
+
+    return values;
+  },
+
+  /**
+   * Gets the column titles from the specified sheet.
+   *
+   * @param {Sheet} sheet the sheet to pull the column titles from.
+   * @returns {Range}  The range containing the column headers.
+   */
+  getColumnTitlesAsRange: function (sheet) {
+    // getLastColumn returns a 0 based index, but the getRange methbod is the count of columns
+    var lastColumnIndex = sheet.getLastColumn();
+    Utility.Debugger.debug('SheetUtility.getColumnTitlesAsArray called, lastColumn value: ' +
+                           lastColumnIndex);
+
+    return sheet.getRange(1, 1, 1, lastColumnIndex == 0 ? 1 : lastColumnIndex);
   },
 
   /**
@@ -19,14 +39,7 @@ var SheetUtility = {
    *         not be found.
    */
   getColumnIndexByName: function (sheet, columnName) {
-    var columnTitles = this.getColumnTitles(sheet)[0];
-    for (var i = 0; i < columnTitles.length; i++) {
-      if (columnTitles[i] === columnName) {
-        return i;
-      }
-    }
-
-    return -1;
+    return this.getColumnTitlesAsArray(sheet).indexOf(columnName);
   },
 
   /**
@@ -42,8 +55,13 @@ var SheetUtility = {
 
   createColumn: function (sheet, columnName) {
     var lastColumn = sheet.getLastColumn();
-    var columnTitles = SheetUtility.getColumnTitles(sheet);
-    columnTitles[0].push(columnName);
-    sheet.getRange(1, 1, 1, lastColumn + 1).setValues(columnTitles);
+    if (lastColumn === 0) {
+      sheet.insertColumns(1);
+    } else {
+      sheet.insertColumnAfter(lastColumn);
+    }
+
+    lastColumn++;
+    sheet.getRange(1, lastColumn, 1, 1).setValue(columnName);
   },
 };

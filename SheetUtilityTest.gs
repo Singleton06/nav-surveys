@@ -1,29 +1,66 @@
-//noinspection JSUnusedGlobalSymbols
-function runSheetUtilityTest() {
-  for (var test in SheetUtilityTest) {
-    Logger.log('Running test ' + test);
-    if (typeof SheetUtilityTest[test] === 'function') {
-      SheetUtilityTest[test]();
-    }
+var Test = Test || {};
 
-    Logger.log('Ran test ' + test);
-  }
-}
+Test.SheetUtilityTest = (function () {
+  var spreadsheet = SpreadsheetApp.openById('1zzrDPByVEEqD6-7bS-ciGmLK2zAEU8PHL0MzD_RCCn4');
+  var noHeaderSheet = spreadsheet.getSheetByName('SheetUtilityTest-NoHeaders');
+  var multipleHeaderSheet = spreadsheet.getSheetByName('SheetUtilityTest-MultipleHeaders');
+  var singleHeaderSheet = spreadsheet.getSheetByName('SheetUtilityTest-SingleHeader');
 
-//noinspection JSUnusedGlobalSymbols,JSUnusedGlobalSymbols
-var SheetUtilityTest = {
-  sheet: SpreadsheetApp.openById('1sX0Xk9B_ngVOCGc_wwWBvg4g-AdfBjv0dC7xEHnUdV4').getActiveSheet(),
+  var _testGetColumnIndexByName = function () {
+    Assert.equal(SheetUtility.getColumnIndexByName(multipleHeaderSheet, 'UUID'), 1);
+    Assert.equal(SheetUtility.getColumnIndexByName(multipleHeaderSheet, 'Timestamp'), 0);
+    Assert.equal(SheetUtility.getColumnIndexByName(multipleHeaderSheet, 'DOES NOT EXIST'), -1);
+  };
 
-  testGetColumnIndexByName: function () {
-    Assert.equal(SheetUtility.getColumnIndexByName(this.sheet, 'UUID'), 3);
-    Assert.equal(SheetUtility.getColumnIndexByName(this.sheet, 'Timestamp'), 0);
-    Assert.equal(SheetUtility.getColumnIndexByName(this.sheet, 'DOES NOT EXIST'), -1);
-  },
+  var _testDoesColumnExist = function () {
+    Assert.equal(SheetUtility.doesColumnExist(multipleHeaderSheet, 'UUID'), true);
+    Assert.equal(SheetUtility.doesColumnExist(multipleHeaderSheet, 'Timestamp'), true);
+    Assert.equal(SheetUtility.doesColumnExist(multipleHeaderSheet, 'timestamp'), false);
+    Assert.equal(SheetUtility.doesColumnExist(multipleHeaderSheet, 'uuid'), false);
+  };
 
-  testDoesUUIDColumnExist: function () {
-    Assert.equal(SheetUtility.doesColumnExist(this.sheet, 'UUID'), true);
-    Assert.equal(SheetUtility.doesColumnExist(this.sheet, 'Timestamp'), true);
-    Assert.equal(SheetUtility.doesColumnExist(this.sheet, 'timestamp'), false);
-    Assert.equal(SheetUtility.doesColumnExist(this.sheet, 'uuid'), false);
-  },
-};
+  var _testCreateColumn = function () {
+    var newColumnName = 'testing';
+    var otherNewColumnName = 'testing2';
+    var newSheetName = 'SheetUtilityTest_' + 'testCreateColumn_' + new Date();
+    var newlyCreatedSheet = spreadsheet.insertSheet(newSheetName);
+
+    SheetUtility.createColumn(newlyCreatedSheet, newColumnName);
+
+    var columnTitles = SheetUtility.getColumnTitlesAsArray(newlyCreatedSheet);
+    Assert.equal(columnTitles, [newColumnName]);
+
+    SheetUtility.createColumn(newlyCreatedSheet, otherNewColumnName);
+    columnTitles = SheetUtility.getColumnTitlesAsArray(newlyCreatedSheet);
+    Assert.equal(columnTitles, [newColumnName, otherNewColumnName]);
+
+    spreadsheet.deleteSheet(newlyCreatedSheet);
+  };
+
+  var _testGetColumnTitlesAsArrayEmptyArray = function () {
+    var columnTitles = SheetUtility.getColumnTitlesAsArray(noHeaderSheet);
+
+    Assert.equal(columnTitles, []);
+  };
+
+  var _testGetColumnTitlesAsArraySingleElement = function () {
+    var columnTitles = SheetUtility.getColumnTitlesAsArray(singleHeaderSheet);
+
+    Assert.equal(columnTitles, ['Timestamp']);
+  };
+
+  var _testGetColumnTitlesAsArrayMultipleElements = function () {
+    var columnTitles = SheetUtility.getColumnTitlesAsArray(multipleHeaderSheet);
+
+    Assert.equal(columnTitles, ['Timestamp', 'UUID']);
+  };
+
+  return {
+    testGetColumnIndexByName: _testGetColumnIndexByName,
+    testDoesColumnExist: _testDoesColumnExist,
+    testCreateColumn: _testCreateColumn,
+    testGetColumnTitlesAsArrayEmptyArray: _testGetColumnTitlesAsArrayEmptyArray,
+    testGetColumnTitlesAsArraySingleElement: _testGetColumnTitlesAsArraySingleElement,
+    testGetColumnTitlesAsArrayMultipleElements: _testGetColumnTitlesAsArrayMultipleElements,
+  };
+})();

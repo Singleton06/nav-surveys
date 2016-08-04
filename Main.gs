@@ -1,8 +1,8 @@
-var config = {
+var GlobalConfig = {
   /**
    * The configuration for which column that the data should be split by.
    */
-  splittingColumn: 'Hall',
+  splittingColumnKey: 'Hall',
 
   /**
    * The suffix that will be appended to the end of the scripts that get created
@@ -30,12 +30,12 @@ var config = {
 
 //noinspection JSUnusedGlobalSymbols
 /**
- * Built in google apps method that will be called when the script is opened.  It has to be attached
- * to a project for this to work.
+ * This is a method that can only be called once to add the trigger to the spreadsheet/form.
+ * This should not be executed more than once because it will add multiple triggers to the google
+ * sheet and the behavior becomes very erradic at that point.
  */
-
 function installTrigger() {
-  var currentSpreadSheet = SpreadsheetApp.openById(config.spreadsheetIdToAttachTo);
+  var currentSpreadSheet = SpreadsheetApp.openById(GlobalConfig.spreadsheetIdToAttachTo);
   ScriptApp.newTrigger('onSurveySubmission').forSpreadsheet(currentSpreadSheet).onFormSubmit()
     .create();
 }
@@ -47,11 +47,50 @@ function onSurveySubmission(e) {
 //noinspection JSUnusedLocalSymbols
 var Main = {
   performSurveySubmission: function (e) {
-    var currentSpreadSheet = SpreadsheetApp.openById(config.spreadsheetIdToAttachTo);
+    var currentSpreadSheet = SpreadsheetApp.openById(GlobalConfig.spreadsheetIdToAttachTo);
     var currentSheet = currentSpreadSheet.getActiveSheet();
 
     UUIDGenerator.populateAnyMissingValuesInTheUUIDColumn(currentSheet);
     this.splitDataIntoSeparateSheets(currentSheet);
+  },
+
+  splitData: function (sheet) {
+    Main.createExportedColumnIfItDoesNotExist(sheet);
+    var columnHeaderInformation = Main.getColumnHeaderInformation(sheet);
+    var allSheetData = sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
+    var parentFolder = this.getParentFolderOfSpreadsheet(sheet);
+    var categorySpecificData = {};
+    var exportedIndecies = [];
+    allSheetData.forEach(function (currentRow, index) {
+      var category = currentRow[columnHeaderInformation.splitColumnIndex];
+      if (category === '') {
+        return;
+      }
+
+      if (categorySpecificData[category] === undefined) {
+        categorySpecificData[category] = Main.initializeCategorySpecificData(parentFolder, category,
+          columnHeaderInformation);
+      }
+
+      if (currentRow[columnHeaderInformation.exportedColumnIndex]) {
+        categorySpecificData[category].dataToAdd.push(currentRow);
+        exportedIndecies.push(index);
+      }
+    });
+
+    Main.populateDataInSplitForms(categorySpecificData);
+  },
+
+  initializeCategorySpecificData: function (parentFolder, category, columnHeaderInformation) {
+    return {
+      dataToAdd: [],
+      spreadsheetInfo: Main.addSpreadsheetIfMissingAndRetrieve(parentFolder, category,
+        columnHeaderInformation.headers.filter(Main.allColumnHeadersButExportedFilter)),
+    };
+  },
+
+  allColumnHeadersButExportedFilter: function (value) {
+    return value !== GlobalConfig.exportedColumnKey;
   },
 
   populateDataInSplitForms: function (categorySpecificData) {
@@ -73,41 +112,6 @@ var Main = {
     }
   },
 
-  splitData: function (sheet) {
-    Main.createExportedColumnIfItDoesNotExist(sheet);
-    var columnHeaderInformation = Main.getColumnHeaderInformation(sheet);
-    var allSheetData = sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
-    var parentFolder = this.getParentFolderOfSpreadsheet(sheet);
-    var categorySpecificData = {};
-    var exportedIndecies = [];
-    allSheetData.forEach(function (currentRow, index) {
-      var category = currentRow[columnHeaderInformation.splitColumnIndex];
-      if (category === '') {
-        return;
-      }
-
-      if (categorySpecificData[category] === undefined) {
-        categorySpecificData[category] = {
-          dataToAdd: [],
-        };
-        var categorySpreadsheetHeaders = columnHeaderInformation.headers.filter(function (value) {
-          return value !== config.exportedColumnKey;
-        });
-
-        categorySpecificData[category].spreadsheetInfo =
-          Main.addSpreadsheetIfMissingAndRetrieve(parentFolder, category,
-            categorySpreadsheetHeaders);
-      }
-
-      if (currentRow[columnHeaderInformation.exportedColumnIndex]) {
-        categorySpecificData[category].dataToAdd.push(currentRow);
-        exportedIndecies.push(index);
-      }
-    });
-
-    Main.populateDataInSplitForms(categorySpecificData);
-  },
-
   splitDataIntoSeparateSheets: function (sheet) {
 
     Main.createExportedColumnIfItDoesNotExist(sheet);
@@ -127,7 +131,7 @@ var Main = {
 
       if (categoryToSpreadsheetMap[category] === undefined) {
         var categorySpreadsheetHeaders = columnHeaderInformation.headers.filter(function (value) {
-          return value !== config.exportedColumnKey;
+          return value !== GlobalConfig.exportedColumnKey;
         });
 
         categoryToSpreadsheetMap[category] = Main.addSpreadsheetIfMissingAndRetrieve(parentFolder,
@@ -147,20 +151,20 @@ var Main = {
 
   getColumnHeaderInformation: function (sheet) {
     return {
-      exportedColumnIndex: SheetUtility.getColumnIndexByName(sheet, config.exportedColumnKey),
-      splitColumnIndex: SheetUtility.getColumnIndexByName(sheet, config.splittingColumn),
-      headers: SheetUtility.getColumnTitles(sheet)[0],
+      exportedColumnIndex: SheetUtility.getColumnIndexByName(sheet, GlobalConfig.exportedColumnKey),
+      splitColumnIndex: SheetUtility.getColumnIndexByName(sheet, GlobalConfig.splittingColumnKey),
+      headers: SheetUtility.getColumnTitlesAsArray(sheet),
     };
   },
 
   createExportedColumnIfItDoesNotExist: function (sheet) {
-    if (SheetUtility.getColumnIndexByName(sheet, config.exportedColumnKey) == -1) {
-      SheetUtility.createColumn(sheet, config.exportedColumnKey);
+    if (SheetUtility.getColumnIndexByName(sheet, GlobalConfig.exportedColumnKey) == -1) {
+      SheetUtility.createColumn(sheet, GlobalConfig.exportedColumnKey);
     }
   },
 
   addSpreadsheetIfMissingAndRetrieve: function (parentFolder, name, headers) {
-    var spreadsheetName = name + config.splitSpreadsheetSuffix;
+    var spreadsheetName = name + GlobalConfig.splitSpreadsheetSuffix;
     var spreadsheetIterator = parentFolder.getFilesByName(spreadsheetName);
     var spreadsheet;
     if (!spreadsheetIterator.hasNext()) {
@@ -182,7 +186,7 @@ var Main = {
     //noinspection JSCheckFunctionSignatures
     return {
       uuidColumnIndex: SheetUtility.getColumnIndexByName(spreadsheet.getSheets()[0],
-        config.uuidColumnKey),
+                                                         GlobalConfig.uuidColumnKey),
       spreadsheet: spreadsheet,
     };
   },
