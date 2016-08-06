@@ -1,5 +1,16 @@
 var Model = Model || {};
 
+/**
+ * Model object representing a spreadsheet's data that is specific to a single category.  This
+ * sheet can be used to contain information that will at a later time be added to this specific
+ * sheet.
+ *
+ * @param {String} category The category name that the category specific spreadsheet pertains to.
+ * @param {GoogleAppsScript.Drive.Folder} parentFolder the parent folder that should contain the
+ *   spreadsheet.
+ * @param {String[]} headers the headers that the category specific spreadsheet should contain.
+ * @constructor
+ */
 Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
 
   /**
@@ -10,14 +21,15 @@ Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
    * @private
    */
   var _constructCategorySpreadsheetName = function (spreadsheetCategoryName) {
-    return spreadsheetCategoryName + GlobalConfig.splitSpreadsheetSuffix;
+    return spreadsheetCategoryName + GlobalConfig.categorySpecificSpreadsheetSuffix;
   };
 
   /**
    * Retrieves the existing spreadsheet based on th e provided parent folder and spreadsheet name.
    * If no spreadsheet can be found, null will be returned.
    *
-   * @param parentFolder the parent folder to search within when looking for the spreadsheet.
+   * @param {GoogleAppsScript.Drive.Folder} parentFolder the parent folder to search within when
+   *   looking for the spreadsheet.
    * @param {string} spreadsheetName the name of the spreadsheet to retrieve.
    * @returns {null|GoogleAppsScript.Spreadsheet.Spreadsheet} if a spreadsheet can be found, the
    *            spreadsheet will be returned, otherwise null will be returned.
@@ -26,7 +38,15 @@ Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
   var _getExistingSpreadsheet = function (parentFolder, spreadsheetName) {
     var spreadsheetIterator = parentFolder.getFilesByName(spreadsheetName);
     if (spreadsheetIterator.hasNext()) {
-      SpreadsheetApp.openById(spreadsheetIterator.next().getId());
+      var spreadsheet = SpreadsheetApp.openById(spreadsheetIterator.next().getId());
+
+      if (spreadsheetIterator.hasNext())
+      {
+        throw 'Found more than one spreadsheet with the same name of [' + spreadsheetName +
+          '] within the parent folder [' + parentFolder.getName() + '].';
+      }
+
+      return spreadsheet;
     }
 
     return null;
@@ -49,14 +69,13 @@ Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
   };
 
   /**
-   * Creates a new spreadsheet in the specified folder with the given name and the starting headers.
+   * Creates a new spreadsheet in the specified folder with the given name and the starting
+   * headers.
    *
    * @param {GoogleAppsScript.Drive.Folder} parentFolder the parent folder to store the newly
-   *                                                     created spreadsheet.  All other parents
-   *                                                     will be removed from the newly created
-   *                                                     spreadsheet.
+   *   created spreadsheet.  All other parents will be removed from the newly created spreadsheet.
    * @param {string} spreadsheetName The name of the spreadsheet to create.
-   * @param {array} headers The headers that will be a part of the newly created spreadsheet.
+   * @param {Array} headers The headers that will be a part of the newly created spreadsheet.
    *
    * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet} the spreadsheet that was created.
    * @private
@@ -71,6 +90,18 @@ Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
     return newSpreadsheet;
   };
 
+  /**
+   *
+   * @param {String} category the string representing the category.
+   * @param {GoogleAppsScript.Drive.Folder} parentFolder the parent folder that contains the
+   *   spreadsheet.
+   * @param {String[]} headers the headers that the category specific spreadsheet contains.
+   * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet} the spreadsheet that is supposed to
+   *   contain the category specific information.  Note that this does not necessarily mean at this
+   *   point that the spreadsheet contains any category specific information yet.  It could be
+   *   empty.
+   * @private
+   */
   var _retrieveCategorySpecificSpreadsheet = function (category, parentFolder, headers) {
     var spreadsheetName = _constructCategorySpreadsheetName(category);
     var existingSpreadsheet = _getExistingSpreadsheet(parentFolder, spreadsheetName);
@@ -81,6 +112,28 @@ Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
     return existingSpreadsheet;
   };
 
+  /**
+   * The category name that the category specific spreadsheet pertains to.
+   *
+   * @type {String}
+   */
   this.category = category;
+
+  /**
+   * The spreadsheet that is supposed to contain the category specific information.  Note that this
+   * does not necessarily mean at this point that the spreadsheet contains any category specific
+   * information yet.  It could be empty.
+   *
+   * @type {GoogleAppsScript.Spreadsheet.Spreadsheet}
+   */
   this.spreadsheet = _retrieveCategorySpecificSpreadsheet(category, parentFolder, headers);
+
+  /**
+   * An array of all of the data that will need to be exported.  This will start off as an empty
+   * array, but can be used as a place to collection information specific to this cateogry
+   * that can be added to the spreadsheet.
+   *
+   * @type {Array}
+   */
+  this.dataToExport = [];
 };

@@ -8,7 +8,7 @@ var GlobalConfig = {
    * The suffix that will be appended to the end of the scripts that get created
    * when the data is being sectioned out into separate spreadsheets.
    */
-  splitSpreadsheetSuffix: '-Hall-Spreadsheet',
+  categorySpecificSpreadsheetSuffix: '-Hall-Spreadsheet',
 
   /**
    * The spreadsheet that contains the survey responses that will ultimately
@@ -164,7 +164,7 @@ var Main = {
   },
 
   addSpreadsheetIfMissingAndRetrieve: function (parentFolder, name, headers) {
-    var spreadsheetName = name + GlobalConfig.splitSpreadsheetSuffix;
+    var spreadsheetName = name + GlobalConfig.categorySpecificSpreadsheetSuffix;
     var spreadsheetIterator = parentFolder.getFilesByName(spreadsheetName);
     var spreadsheet;
     if (!spreadsheetIterator.hasNext()) {
