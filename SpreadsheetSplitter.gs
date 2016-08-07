@@ -13,30 +13,35 @@ DataProcessing.SpreadsheetSplitter = (function () {
    *   data that will be split into multiple category specific sheets.  Note that this method will
    *   not change data in the masterSheet, but may add additional columns for tracking purposes.
    *
-   * @returns {CategorySpecificSpreadsheet[]} an array of CategorySpecificSpreadsheet values, each
-   *   keyed by the specified category.
+   * @returns {Object} an object containing CategorySpecificSpreadsheet whose property is the
+   *    category that they pertain to, each keyed by the specified category.
    */
   var _splitSpreadsheetsByCategories = function (masterSheet) {
     _createExportedColumnIfMissing(masterSheet);
     var masterSheetData = new Model.MasterSheet(masterSheet);
+    Utility.Debugger.debug('All master sheet data to be processed ' + masterSheetData.allData);
+
     var categorySpecificSpreadsheetHeaders = _getCategorySpecificSpreadsheetHeaders(
       masterSheetData.headers);
-    var categorySpecificSpreadsheets = [];
+    var categorySpecificSpreadsheets = {};
     var lastExportedRowIndex = -1;
 
     masterSheetData.allData.forEach(function (currentRow, currentRowIndex) {
-      var currentRowCategory = currentRow[masterSheetData.splittingColumnIndex];
+      var currentRowCategory = String(currentRow[masterSheetData.splittingColumnIndex]);
+      Utility.Debugger.debug(
+        'Current Row: ' + currentRow + ' with detected category ' + currentRowCategory);
       if (currentRowCategory === '') {
         return;
       }
 
-      if (categorySpecificSpreadsheets[currentRowCategory] === undefined) {
-        categorySpecificSpreadsheets[currentRowCategory] =
-          new Model.CategorySpecificSpreadsheet(currentRowCategory, masterSheetData.parentFolder,
-            categorySpecificSpreadsheetHeaders);
-      }
+      if (!currentRow[masterSheetData.exportedColumnIndex]) {
+        if (categorySpecificSpreadsheets[currentRowCategory] === undefined) {
 
-      if (currentRow[masterSheetData.exportedColumnIndex]) {
+          categorySpecificSpreadsheets[currentRowCategory] =
+            new Model.CategorySpecificSpreadsheet(currentRowCategory, masterSheetData.parentFolder,
+              categorySpecificSpreadsheetHeaders);
+        }
+
         categorySpecificSpreadsheets[currentRowCategory].dataToExport.push(
           currentRow.filter(function (element, index) {
             return index !== masterSheetData.exportedColumnIndex;
@@ -51,7 +56,7 @@ DataProcessing.SpreadsheetSplitter = (function () {
   };
 
   /**
-   * Takes the headers from the master sheet and pulls out the relveant headers for category
+   * Takes the headers from the master sheet and pulls out the relevant headers for category
    * specific spreadsheets.
    *
    * @param {Array} masterSheetHeaders the headers that show up in the master.  This array is not
@@ -67,7 +72,8 @@ DataProcessing.SpreadsheetSplitter = (function () {
   /**
    * Adds a column to the specified master sheet to track whether or not the item was exported.
    *
-   * @param masterSheet the paster sheet to add the exported column to.
+   * @param {GoogleAppsScript.Spreadsheet.Sheet} masterSheet the master sheet to add the
+   *   exported column to.
    * @private
    */
   var _createExportedColumnIfMissing = function (masterSheet) {

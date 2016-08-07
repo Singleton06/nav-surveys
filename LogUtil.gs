@@ -11,7 +11,7 @@ Utility.Logger = (function () {
 })();
 
 Utility.Debugger = (function () {
-  var debugEnabled = true;
+  var debugEnabled = false;
 
   var _debug = function (data) {
     if (debugEnabled) {

@@ -1,4 +1,4 @@
-function RunTests() {
+function RunTests(className, testName) {
   if (!Test) {
     Utility.Logger.log('No Tests were ran because Test is undefined');
   }
@@ -7,8 +7,19 @@ function RunTests() {
   for (var testClass in Test) {
     Utility.Logger.log('');
     Utility.Logger.log('Class: ' + testClass);
+    if (className) {
+      if (testClass !== className) {
+        continue;
+      }
+    }
 
     for (var singleTest in Test[testClass]) {
+      if (testName) {
+        if (singleTest !== testName) {
+          continue;
+        }
+      }
+
       if (!Test[testClass].hasOwnProperty(singleTest)) {
         continue;
       }

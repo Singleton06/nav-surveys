@@ -27,7 +27,7 @@ Test.MasterSheetTest = (function () {
   };
 
   var _testConstructorSheetWithoutData = function () {
-    var expectedData = [[]];
+    var expectedData = [];
 
     var masterSheet = new Model.MasterSheet(sheetWithoutData);
 
@@ -45,7 +45,7 @@ Test.MasterSheetTest = (function () {
   };
 
   var _testConstructorNoHeaderNoData = function () {
-    var expectedData = [[]];
+    var expectedData = [];
 
     var masterSheet = new Model.MasterSheet(sheetWithoutHeadersOrData);
 

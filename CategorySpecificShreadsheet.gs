@@ -12,6 +12,9 @@ var Model = Model || {};
  * @constructor
  */
 Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
+  Utility.Debugger.debug('CategorySpecificSpreadsheet constructor called with values: category: ['
+                         + category + '] parentFolder with name: [' + parentFolder.getName()
+                         + '] headers: [' + headers + ']');
 
   /**
    * Constructs the spreadsheet name that will be used specifically for this category.
@@ -40,10 +43,9 @@ Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
     if (spreadsheetIterator.hasNext()) {
       var spreadsheet = SpreadsheetApp.openById(spreadsheetIterator.next().getId());
 
-      if (spreadsheetIterator.hasNext())
-      {
+      if (spreadsheetIterator.hasNext()) {
         throw 'Found more than one spreadsheet with the same name of [' + spreadsheetName +
-          '] within the parent folder [' + parentFolder.getName() + '].';
+        '] within the parent folder [' + parentFolder.getName() + '].';
       }
 
       return spreadsheet;

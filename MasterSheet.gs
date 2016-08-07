@@ -60,7 +60,7 @@ Model.MasterSheet = function (masterSheet) {
     // if the last column is 0, it means there are now columns.  If lastRow is 1, then
     // that means there is no data, there is only the headers.
     if (lastColumn === 0 || lastRow === 1) {
-      return [[]];
+      return [];
     }
 
     /*
