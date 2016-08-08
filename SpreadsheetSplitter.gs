@@ -13,8 +13,8 @@ DataProcessing.SpreadsheetSplitter = (function () {
    *   data that will be split into multiple category specific sheets.  Note that this method will
    *   not change data in the masterSheet, but may add additional columns for tracking purposes.
    *
-   * @returns {Object} an object containing CategorySpecificSpreadsheet whose property is the
-   *    category that they pertain to, each keyed by the specified category.
+   * @returns {Model.ProcessedMasterSheet} a processed master sheet containing all of the
+   *   information needed to export the data from the master sheet.
    */
   var _splitSpreadsheetsByCategories = function (masterSheet) {
     _createExportedColumnIfMissing(masterSheet);
@@ -24,6 +24,7 @@ DataProcessing.SpreadsheetSplitter = (function () {
     var categorySpecificSpreadsheetHeaders = _getCategorySpecificSpreadsheetHeaders(
       masterSheetData.headers);
     var categorySpecificSpreadsheets = {};
+    var allCategoriesForExporting = [];
     var lastExportedRowIndex = -1;
 
     masterSheetData.allData.forEach(function (currentRow, currentRowIndex) {
@@ -36,7 +37,7 @@ DataProcessing.SpreadsheetSplitter = (function () {
 
       if (!currentRow[masterSheetData.exportedColumnIndex]) {
         if (categorySpecificSpreadsheets[currentRowCategory] === undefined) {
-
+          allCategoriesForExporting.push(currentRowCategory);
           categorySpecificSpreadsheets[currentRowCategory] =
             new Model.CategorySpecificSpreadsheet(currentRowCategory, masterSheetData.parentFolder,
               categorySpecificSpreadsheetHeaders);
@@ -47,12 +48,14 @@ DataProcessing.SpreadsheetSplitter = (function () {
             return index !== masterSheetData.exportedColumnIndex;
           }));
 
-        lastExportedRowIndex =
-          lastExportedRowIndex < currentRowIndex ? currentRowIndex : lastExportedRowIndex;
+        // we always add 1 to the currentRowIndex because we are starting our range of
+        // data by ignoring the headers.
+        lastExportedRowIndex = Math.max(lastExportedRowIndex, currentRowIndex + 1);
       }
     });
 
-    return categorySpecificSpreadsheets;
+    return new Model.ProcessedMasterSheet(categorySpecificSpreadsheets, allCategoriesForExporting,
+      lastExportedRowIndex);
   };
 
   /**

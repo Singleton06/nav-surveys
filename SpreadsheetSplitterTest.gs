@@ -20,7 +20,8 @@ Test.SpreadsheetSplitterTest = (function () {
   var multipleEntiresSameCategorySheet = testSpreadsheet.getSheetByName(
     'MultipleEntriesSameCategory');
   var allDataExportedSheet = testSpreadsheet.getSheetByName('AllDataExported');
-  var partialDataExported = testSpreadsheet.getSheetByName('PartialDataExported');
+  var partialDataExportedSheet = testSpreadsheet.getSheetByName('PartialDataExported');
+  var middleEntryNotExportedSheet = testSpreadsheet.getSheetByName('MiddleEntryNotExported');
 
   var _testSplitSpreadsheetsByCategoriesWithoutExportedColumn = function () {
     var headers = SheetUtility.getColumnTitlesAsRange(missingExportedColumnSheet);
@@ -29,8 +30,9 @@ Test.SpreadsheetSplitterTest = (function () {
       headers.getCell(1, exportedColumnHeaderIndex + 1).setValue('');
     }
 
-    var categorySpecificSheets = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
+    var processedMasterSheet = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
       missingExportedColumnSheet);
+    var categorySpecificSheets = processedMasterSheet.categorySpecificSpreadsheets;
 
     var headersAfterProcessing = SheetUtility.getColumnTitlesAsRange(missingExportedColumnSheet);
     var exportedColumnHeaderIndexAfterProcessing = headersAfterProcessing.getValues()[0].indexOf(
@@ -42,8 +44,9 @@ Test.SpreadsheetSplitterTest = (function () {
   };
 
   var _testSplitSpreadsheetsByCategoriesWithMultipleEntiresInSameCategory = function () {
-    var categorySpecificSheets = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
+    var processedMasterSheet = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
       multipleEntiresSameCategorySheet);
+    var categorySpecificSheets = processedMasterSheet.categorySpecificSpreadsheets;
 
     var categoryA = categorySpecificSheets.a;
     Assert.equal(categoryA.category, 'a');
@@ -59,20 +62,27 @@ Test.SpreadsheetSplitterTest = (function () {
                  'b' + GlobalConfig.categorySpecificSpreadsheetSuffix);
     Assert.equal(categoryB.dataToExport, [['column1Value2', 'column2Value2', 'b']]);
     DriveApp.getFileById(categoryB.spreadsheet.getId()).setTrashed(true);
+
+    Assert.equal(processedMasterSheet.categories, ['a', 'b']);
+    Assert.equal(processedMasterSheet.lastProcessedRowIndex, 3);
+
   };
 
   var _testSplitSpreadsheetsByCategoriesWithAllDataExported = function () {
-    var categorySpecificSheets = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
+    var processedMasterSheet = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
       allDataExportedSheet);
+    var categorySpecificSheets = processedMasterSheet.categorySpecificSpreadsheets;
 
     Assert.equal(Object.keys(categorySpecificSheets).length, 0);
     Assert.equal(categorySpecificSheets.a, undefined);
     Assert.equal(categorySpecificSheets.b, undefined);
+    Assert.equal(processedMasterSheet.lastProcessedRowIndex, -1);
   };
 
   var _testSplitSpreadsheetsByCategoriesWithPartialDataExported = function () {
-    var categorySpecificSheets = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
-      partialDataExported);
+    var processedMasterSheet = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
+      partialDataExportedSheet);
+    var categorySpecificSheets = processedMasterSheet.categorySpecificSpreadsheets;
 
     var categoryA = categorySpecificSheets.a;
     Assert.equal(categoryA.category, 'a');
@@ -80,6 +90,27 @@ Test.SpreadsheetSplitterTest = (function () {
                  'a' + GlobalConfig.categorySpecificSpreadsheetSuffix);
     Assert.equal(categoryA.dataToExport, [['column1Value3', 'column2Value3', 'a']]);
     DriveApp.getFileById(categoryA.spreadsheet.getId()).setTrashed(true);
+
+    Assert.equal(categorySpecificSheets.b, undefined);
+    Assert.equal(processedMasterSheet.lastProcessedRowIndex, 3);
+    Assert.equal(processedMasterSheet.categories, ['a']);
+  };
+
+  var _testSplitSpreadsheetsByCategoriesWithMiddleEntryNotExported = function () {
+    var processedMasterSheet = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
+      middleEntryNotExportedSheet);
+    var categorySpecificSheets = processedMasterSheet.categorySpecificSpreadsheets;
+
+    Assert.equal(categorySpecificSheets.a, undefined);
+
+    var categoryB = categorySpecificSheets.b;
+    Assert.equal(categoryB.category, 'b');
+    Assert.equal(categoryB.spreadsheet.getName(),
+                 'b' + GlobalConfig.categorySpecificSpreadsheetSuffix);
+    Assert.equal(categoryB.dataToExport, [['column1Value2', 'column2Value2', 'b']]);
+    Assert.equal(processedMasterSheet.lastProcessedRowIndex, 2);
+    Assert.equal(processedMasterSheet.categories, ['b']);
+    DriveApp.getFileById(categoryB.spreadsheet.getId()).setTrashed(true);
   };
 
   //@formatter:off
@@ -94,7 +125,10 @@ Test.SpreadsheetSplitterTest = (function () {
       _testSplitSpreadsheetsByCategoriesWithAllDataExported,
 
     testSplitSpreadsheetsByCategoriesWithPartialDataExported:
-      _testSplitSpreadsheetsByCategoriesWithPartialDataExported
+      _testSplitSpreadsheetsByCategoriesWithPartialDataExported,
+
+    testSplitSpreadsheetsByCategoriesWithMiddleEntryNotExported:
+      _testSplitSpreadsheetsByCategoriesWithMiddleEntryNotExported
   };
 
   //@formatter:on

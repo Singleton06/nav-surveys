@@ -135,7 +135,7 @@ Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
    * array, but can be used as a place to collection information specific to this cateogry
    * that can be added to the spreadsheet.
    *
-   * @type {Array}
+   * @type {Object[]}
    */
   this.dataToExport = [];
 };
