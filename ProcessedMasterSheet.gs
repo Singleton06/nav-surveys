@@ -13,13 +13,16 @@ var Model = Model || {};
  *   will help to determine just how far the processing occurred within the master sheet given that
  *   at any time an additional entry could be added.  This value will be 0 based.  If there
  *   were no rows that were processed, this value should be set to -1.
+ * @param {Model.MasterSheet} masterSheet the reference to the master sheet that
+ *   all of the other fields were populated from.
  *
  * @see {@link Model.CategorySpecificSpreadsheet}
  * @constructor
  */
 Model.ProcessedMasterSheet = function (categorySpecificSpreadsheets, categories,
-                                       lastProcessedRowIndex) {
+                                       lastProcessedRowIndex, masterSheet) {
   this.categorySpecificSpreadsheets = categorySpecificSpreadsheets;
   this.lastProcessedRowIndex = lastProcessedRowIndex;
   this.categories = categories;
+  this.masterSheet = masterSheet;
 };

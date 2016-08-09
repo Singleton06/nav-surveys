@@ -34,7 +34,7 @@ Test.CategorySpecificSpreadsheetPopulatorTest = (function () {
 
     try {
       var processedMasterSheet = new Model.ProcessedMasterSheet({ a: categorySpecificSpreadsheet },
-        [category], 2);
+        [category], 2, null);
       categorySpecificSpreadsheet.dataToExport = dataToExport;
 
       DataProcessing.CategorySpecificSpreadsheetPopulator.populateCategorySpecificSpreadsheets(
@@ -63,7 +63,7 @@ Test.CategorySpecificSpreadsheetPopulatorTest = (function () {
 
     try {
       var processedMasterSheet = new Model.ProcessedMasterSheet({ b: categorySpecificSpreadsheet },
-        [category], 5);
+        [category], 5, null);
       categorySpecificSpreadsheet.dataToExport = dataToExport;
 
       DataProcessing.CategorySpecificSpreadsheetPopulator.populateCategorySpecificSpreadsheets(

@@ -55,7 +55,7 @@ DataProcessing.SpreadsheetSplitter = (function () {
     });
 
     return new Model.ProcessedMasterSheet(categorySpecificSpreadsheets, allCategoriesForExporting,
-      lastExportedRowIndex);
+      lastExportedRowIndex, masterSheetData);
   };
 
   /**

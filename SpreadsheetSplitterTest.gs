@@ -39,6 +39,8 @@ Test.SpreadsheetSplitterTest = (function () {
       GlobalConfig.exportedColumnKey);
     Assert.equal(exportedColumnHeaderIndexAfterProcessing !== -1, true);
     Assert.equal(Object.keys(categorySpecificSheets).length, 0);
+    Assert.equal(processedMasterSheet.masterSheet.sheet.getName(),
+                 missingExportedColumnSheet.getName());
 
     headersAfterProcessing.getCell(1, exportedColumnHeaderIndexAfterProcessing + 1).setValue('');
   };
@@ -65,7 +67,8 @@ Test.SpreadsheetSplitterTest = (function () {
 
     Assert.equal(processedMasterSheet.categories, ['a', 'b']);
     Assert.equal(processedMasterSheet.lastProcessedRowIndex, 3);
-
+    Assert.equal(processedMasterSheet.masterSheet.sheet.getName(),
+                 multipleEntiresSameCategorySheet.getName());
   };
 
   var _testSplitSpreadsheetsByCategoriesWithAllDataExported = function () {
@@ -77,6 +80,7 @@ Test.SpreadsheetSplitterTest = (function () {
     Assert.equal(categorySpecificSheets.a, undefined);
     Assert.equal(categorySpecificSheets.b, undefined);
     Assert.equal(processedMasterSheet.lastProcessedRowIndex, -1);
+    Assert.equal(processedMasterSheet.masterSheet.sheet.getName(), allDataExportedSheet.getName());
   };
 
   var _testSplitSpreadsheetsByCategoriesWithPartialDataExported = function () {
@@ -94,6 +98,8 @@ Test.SpreadsheetSplitterTest = (function () {
     Assert.equal(categorySpecificSheets.b, undefined);
     Assert.equal(processedMasterSheet.lastProcessedRowIndex, 3);
     Assert.equal(processedMasterSheet.categories, ['a']);
+    Assert.equal(processedMasterSheet.masterSheet.sheet.getName(),
+                 partialDataExportedSheet.getName());
   };
 
   var _testSplitSpreadsheetsByCategoriesWithMiddleEntryNotExported = function () {
@@ -110,6 +116,8 @@ Test.SpreadsheetSplitterTest = (function () {
     Assert.equal(categoryB.dataToExport, [['column1Value2', 'column2Value2', 'b']]);
     Assert.equal(processedMasterSheet.lastProcessedRowIndex, 2);
     Assert.equal(processedMasterSheet.categories, ['b']);
+    Assert.equal(processedMasterSheet.masterSheet.sheet.getName(),
+                 middleEntryNotExportedSheet.getName());
     DriveApp.getFileById(categoryB.spreadsheet.getId()).setTrashed(true);
   };
 
