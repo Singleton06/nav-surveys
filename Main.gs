@@ -37,175 +37,99 @@ var GlobalConfig = {
 function installTrigger() {
   var currentSpreadSheet = SpreadsheetApp.openById(GlobalConfig.spreadsheetIdToAttachTo);
   ScriptApp.newTrigger('onSurveySubmission').forSpreadsheet(currentSpreadSheet).onFormSubmit()
-    .create();
+           .create();
+  ScriptApp.newTrigger('spreadsheetOpened').forSpreadsheet(currentSpreadSheet).onOpen().create();
+}
+
+function spreadsheetOpened(e) {
+  Main.UIHandler.createMenus(e.source);
 }
 
 function onSurveySubmission(e) {
-  Main.performSurveySubmission(e);
+  Main.SubmissionHandler.handleSurveySubmission();
 }
 
-//noinspection JSUnusedLocalSymbols
-var Main = {
-  performSurveySubmission: function (e) {
+function generateMetaDataSheet() {
+  Main.UIHandler.generateMetaDataSheet();
+}
+
+var Main = Main || {};
+
+Main.SubmissionHandler = (function () {
+  var _handleSurveySubmission = function () {
     var currentSpreadSheet = SpreadsheetApp.openById(GlobalConfig.spreadsheetIdToAttachTo);
-    var currentSheet = currentSpreadSheet.getActiveSheet();
 
-    UUIDGenerator.populateAnyMissingValuesInTheUUIDColumn(currentSheet);
-    this.splitDataIntoSeparateSheets(currentSheet);
-  },
+    // always assume first sheet from master contains survey responses
+    var masterSheet = currentSpreadSheet.getSheets()[0];
+    UUIDGenerator.populateAnyMissingValuesInTheUUIDColumn(masterSheet);
 
-  splitData: function (sheet) {
-    Main.createExportedColumnIfItDoesNotExist(sheet);
-    var columnHeaderInformation = Main.getColumnHeaderInformation(sheet);
-    var allSheetData = sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
-    var parentFolder = this.getParentFolderOfSpreadsheet(sheet);
-    var categorySpecificData = {};
-    var exportedIndecies = [];
-    allSheetData.forEach(function (currentRow, index) {
-      var category = currentRow[columnHeaderInformation.splitColumnIndex];
-      if (category === '') {
-        return;
-      }
+    var processedMasterSheet = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
+      masterSheet);
+    DataProcessing.CategorySpecificSpreadsheetPopulator.populateCategorySpecificSpreadsheets(
+      processedMasterSheet);
+    DataProcessing.ExportedColumnPopulator.populateExportedColumn(processedMasterSheet);
+  };
 
-      if (categorySpecificData[category] === undefined) {
-        categorySpecificData[category] = Main.initializeCategorySpecificData(parentFolder, category,
-          columnHeaderInformation);
-      }
+  return {
+    handleSurveySubmission: _handleSurveySubmission
+  };
+})();
 
-      if (currentRow[columnHeaderInformation.exportedColumnIndex]) {
-        categorySpecificData[category].dataToAdd.push(currentRow);
-        exportedIndecies.push(index);
-      }
-    });
+Main.UIHandler = (function () {
+  /**
+   * Adds the menu to the specified spreadsheet.
+   *
+   * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} spreadsheet
+   *      The spreadsheet to create the menu for.
+   * @private
+   */
+  var _createMenus = function (spreadsheet) {
+    var menus = [];
 
-    Main.populateDataInSplitForms(categorySpecificData);
-  },
-
-  initializeCategorySpecificData: function (parentFolder, category, columnHeaderInformation) {
-    return {
-      dataToAdd: [],
-      spreadsheetInfo: Main.addSpreadsheetIfMissingAndRetrieve(parentFolder, category,
-        columnHeaderInformation.headers.filter(Main.allColumnHeadersButExportedFilter)),
-    };
-  },
-
-  allColumnHeadersButExportedFilter: function (value) {
-    return value !== GlobalConfig.exportedColumnKey;
-  },
-
-  populateDataInSplitForms: function (categorySpecificData) {
-    for (var category in categorySpecificData) {
-      if (category.dataToAdd.length === 0) {
-        // Skip if there is no data to add
-        continue;
-      }
-
-      var spreadsheet = category.spreadsheetInfo.spreadsheet;
-      var activeSheet = spreadsheet.getActiveSheet();
-      var lastRowIndex = activeSheet.getLastRow();
-
-      activeSheet.insertRowsAfter(lastRowIndex, category.dataToAdd.length);
-      var dataRangeToUpdate = spreadsheet.getActiveSheet().getRange(lastRowIndex + 1, 1,
-        category.dataToAdd.length, category.dataToAdd[0].length);
-
-      dataRangeToUpdate.setValues(category.dataToAdd);
-    }
-  },
-
-  splitDataIntoSeparateSheets: function (sheet) {
-
-    Main.createExportedColumnIfItDoesNotExist(sheet);
-    var columnHeaderInformation = Main.getColumnHeaderInformation(sheet);
-
-    // skip the headers
-    var allSheetData = sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn());
-    var allSheetDataValues = allSheetData.getValues();
-
-    var parentFolder = this.getParentFolderOfSpreadsheet(sheet);
-    var categoryToSpreadsheetMap = {};
-    allSheetDataValues.forEach(function (currentRow, index) {
-      var category = currentRow[columnHeaderInformation.splitColumnIndex];
-      if (category === '') {
-        return;
-      }
-
-      if (categoryToSpreadsheetMap[category] === undefined) {
-        var categorySpreadsheetHeaders = columnHeaderInformation.headers.filter(function (value) {
-          return value !== GlobalConfig.exportedColumnKey;
-        });
-
-        categoryToSpreadsheetMap[category] = Main.addSpreadsheetIfMissingAndRetrieve(parentFolder,
-          category, categorySpreadsheetHeaders);
-      }
-
-      // add 1 to column and row to adjust for the difference between the array
-      // index and cell indexing
-      var exportedCell = allSheetData.getCell(index + 1,
-        columnHeaderInformation.exportedColumnIndex + 1);
-      if (!exportedCell.getValue()) {
-        categoryToSpreadsheetMap[category].spreadsheet.appendRow(currentRow);
-        exportedCell.setValue(true);
-      }
-    });
-  },
-
-  getColumnHeaderInformation: function (sheet) {
-    return {
-      exportedColumnIndex: SheetUtility.getColumnIndexByName(sheet, GlobalConfig.exportedColumnKey),
-      splitColumnIndex: SheetUtility.getColumnIndexByName(sheet, GlobalConfig.splittingColumnKey),
-      headers: SheetUtility.getColumnTitlesAsArray(sheet),
-    };
-  },
-
-  createExportedColumnIfItDoesNotExist: function (sheet) {
-    if (SheetUtility.getColumnIndexByName(sheet, GlobalConfig.exportedColumnKey) == -1) {
-      SheetUtility.createColumn(sheet, GlobalConfig.exportedColumnKey);
-    }
-  },
-
-  addSpreadsheetIfMissingAndRetrieve: function (parentFolder, name, headers) {
-    var spreadsheetName = name + GlobalConfig.categorySpecificSpreadsheetSuffix;
-    var spreadsheetIterator = parentFolder.getFilesByName(spreadsheetName);
-    var spreadsheet;
-    if (!spreadsheetIterator.hasNext()) {
-      var newlyCreatedSpreadsheet = SpreadsheetApp.create(spreadsheetName);
-      var spreadsheetFile = DriveApp.getFileById(newlyCreatedSpreadsheet.getId());
-      var newlyCreatedFileParentIterator = spreadsheetFile.getParents();
-
-      while (newlyCreatedFileParentIterator.hasNext()) {
-        newlyCreatedFileParentIterator.next().removeFile(spreadsheetFile);
-      }
-
-      parentFolder.addFile(DriveApp.getFileById(newlyCreatedSpreadsheet.getId()));
-      spreadsheet = newlyCreatedSpreadsheet;
-      spreadsheet.appendRow(headers);
-    } else {
-      spreadsheet = SpreadsheetApp.open(spreadsheetIterator.next());
+    if (spreadsheet.getSheetByName('METADATA') == null) {
+      menus.push({ name: 'Generate METADATA sheet', functionName: 'generateMetaDataSheet' });
     }
 
-    //noinspection JSCheckFunctionSignatures
-    return {
-      uuidColumnIndex: SheetUtility.getColumnIndexByName(spreadsheet.getSheets()[0],
-                                                         GlobalConfig.uuidColumnKey),
-      spreadsheet: spreadsheet,
-    };
-  },
+    spreadsheet.addMenu('Nav Survey Actions', menus);
+  };
 
-  getParentFolderOfSpreadsheet: function (spreadsheet) {
-    var parentFoldersIterator = DriveApp.getFileById(spreadsheet.getParent().getId()).getParents();
-    if (!parentFoldersIterator.hasNext()) {
-      throw 'Could not find parent folder for spreadsheet ' + spreadsheet.getName()
-      + ', is it in a directory?';
+  var _generateMetaDataSheet = function () {
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+
+    var form = FormApp.openByUrl(spreadsheet.getFormUrl());
+    var metadataSheet = spreadsheet.insertSheet('METADATA', spreadsheet.getNumSheets());
+    metadataSheet.appendRow(['current-step', 'METADATA-GENERATED'])
+                 .appendRow(['spreadsheet-id', spreadsheet.getId()])
+                 .appendRow(['spreadsheet-url', spreadsheet.getUrl()])
+                 .appendRow(['form-id', form.getId()])
+                 .appendRow(['form-published-url', form.getPublishedUrl()])
+
+    _resizeAllColumns(metadataSheet);
+
+    SpreadsheetApp.getUi()
+                  .alert('METADATA sheet has been created.  Please fill out any blank values in '
+                         + 'column b based on the provided key in column a. \n\n'
+                         + 'NOTE: do not edit column A. \n\n'
+                         + 'Also, the  "Nav Survey Actions" menu has been updated.  '
+                         + 'Once values have been filled out, see the menu for additional '
+                         + 'actions.');
+  };
+
+  /**
+   * Auto-resizes all columns on the specified sheet.
+   *
+   * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+   *      The sheet to resize all columns on.
+   * @private
+   */
+  var _resizeAllColumns = function (sheet) {
+    for (var i = 1; i <= sheet.getLastColumn(); i++) {
+      sheet.autoResizeColumn(i);
     }
+  };
 
-    var parentFolder = parentFoldersIterator.next();
-    if (parentFoldersIterator.hasNext()) {
-      throw 'Multiple parent folders found for spreadsheet '
-      + spreadsheet.getName()
-      + ', parent folder to use to create other spreadsheets could not be determined '
-      + '(given there should only be one parent folder)';
-    }
-
-    return parentFolder;
-  },
-};
+  return {
+    createMenus: _createMenus,
+    generateMetaDataSheet: _generateMetaDataSheet
+  };
+})();

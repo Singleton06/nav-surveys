@@ -32,7 +32,7 @@ var UUIDGenerator = {
   createUUIDColumn: function (sheet) {
     var lastColumn = sheet.getLastColumn();
     var columnTitles = SheetUtility.getColumnTitlesAsArray(sheet);
-    columnTitles[0].push(this.uuidKey);
-    sheet.getRange(1, 1, 1, lastColumn + 1).setValues(columnTitles);
+    columnTitles.push(this.uuidKey);
+    sheet.getRange(1, 1, 1, lastColumn + 1).setValues([columnTitles]);
   },
 };

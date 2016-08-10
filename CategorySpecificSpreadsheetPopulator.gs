@@ -30,6 +30,7 @@ DataProcessing.CategorySpecificSpreadsheetPopulator = (function () {
    * @private
    */
   var _populateCategorySpecificSpreadsheets = function (processedMasterSheet) {
+    Logger.log('Entered _populateCategorySpecificSpreadsheets');
     processedMasterSheet.categories.forEach(function (category) {
       var categorySpecificSheet = processedMasterSheet.categorySpecificSpreadsheets[category];
 
