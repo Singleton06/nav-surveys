@@ -29,6 +29,12 @@ Model.ResidenceHallCategory = function (categoryName, residenceHallNames) {
    */
   this.matches = function (headers, rowToMatch) {
     var residenceHallIndex = headers.indexOf('Residence Hall');
+
+    // sanity check, if the index is missing, we just indicate that it is not a match.
+    if (residenceHallIndex === -1) {
+      return false;
+    }
+
     var residenceHallValue = rowToMatch[residenceHallIndex];
 
     return this.residenceHallNames.indexOf(residenceHallValue) !== -1;
@@ -49,4 +55,12 @@ Model.ResidenceHallCategory = function (categoryName, residenceHallNames) {
    * @type {String[]}
    */
   this.residenceHallNames = residenceHallNames;
+
+  /**
+   * The spreadsheet associated to this category.  This value might not be initialized and should
+   * be accessed defensively.
+   *
+   * @type {null|GoogleAppsScript.Spreadsheet.Spreadsheet}
+   */
+  this.spreadsheet = null;
 };

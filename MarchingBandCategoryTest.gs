@@ -13,15 +13,15 @@ Test.MarchingBandCategoryTest = (function () {
     var nonBand = ['no', 'val1', 'Hall', 'Senior'];
     var wrongIndexBand = ['val1', 'no', 'Hall', 'Senior'];
 
-    var GreekCategory = new Model.GreekCategory(name);
+    var marchingBandCategory = new Model.MarchingBandCategory(name);
 
-    var bandResult = GreekCategory.matches(headers, band);
+    var bandResult = marchingBandCategory.matches(headers, band);
     Assert.equal(bandResult, true);
 
-    var nonBandResult = GreekCategory.matches(headers, nonBand);
+    var nonBandResult = marchingBandCategory.matches(headers, nonBand);
     Assert.equal(nonBandResult, false);
 
-    var wrongIndexBandResult = GreekCategory.matches(headers, wrongIndexBand);
+    var wrongIndexBandResult = marchingBandCategory.matches(headers, wrongIndexBand);
     Assert.equal(wrongIndexBandResult, false);
   };
 

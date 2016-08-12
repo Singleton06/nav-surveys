@@ -8,7 +8,7 @@ var Model = Model || {};
  *      for it.
  * @constructor
  */
-Model.GreekCategory = function (categoryName) {
+Model.MarchingBandCategory = function (categoryName) {
 
   /**
    * Determines whether or not the current entry matches the specified value.
@@ -26,6 +26,12 @@ Model.GreekCategory = function (categoryName) {
    */
   this.matches = function (headers, rowToMatch) {
     var bandIndex = headers.indexOf('Band');
+
+    // sanity check, if the index is missing, we just indicate that it is not a match.
+    if (bandIndex === -1) {
+      return false;
+    }
+
     var bandValue = rowToMatch[bandIndex];
 
     return bandValue === 'yes';
@@ -38,4 +44,12 @@ Model.GreekCategory = function (categoryName) {
    * @type {String}
    */
   this.categoryName = categoryName;
+
+  /**
+   * The spreadsheet associated to this category.  This value might not be initialized and should
+   * be accessed defensively.
+   *
+   * @type {null|GoogleAppsScript.Spreadsheet.Spreadsheet}
+   */
+  this.spreadsheet = null;
 };

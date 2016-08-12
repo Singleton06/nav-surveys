@@ -26,9 +26,21 @@ Model.GreekCategory = function (categoryName) {
    */
   this.matches = function (headers, rowToMatch) {
     var greekIndex = headers.indexOf('Greek');
+
+    // sanity check, if the index is missing, we just indicate that it is not a match.
+    if (greekIndex === -1) {
+      return false;
+    }
+
     var greekValue = rowToMatch[greekIndex];
 
     var yearInSchoolIndex = headers.indexOf('Year in School');
+
+    // sanity check, if the index is missing, we just indicate that it is not a match.
+    if (yearInSchoolIndex === -1) {
+      return false;
+    }
+
     var yearInSchoolValue = rowToMatch[yearInSchoolIndex];
 
     return yearInSchoolValue != 'Freshman' && greekValue != 'no';
@@ -41,4 +53,12 @@ Model.GreekCategory = function (categoryName) {
    * @type {String}
    */
   this.categoryName = categoryName;
+
+  /**
+   * The spreadsheet associated to this category.  This value might not be initialized and should
+   * be accessed defensively.
+   *
+   * @type {null|GoogleAppsScript.Spreadsheet.Spreadsheet}
+   */
+  this.spreadsheet = null;
 };

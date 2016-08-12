@@ -1,10 +1,5 @@
 var GlobalConfig = {
   /**
-   * The configuration for which column that the data should be split by.
-   */
-  splittingColumnKey: 'Hall',
-
-  /**
    * The suffix that will be appended to the end of the scripts that get created
    * when the data is being sectioned out into separate spreadsheets.
    */
@@ -14,7 +9,7 @@ var GlobalConfig = {
    * The spreadsheet that contains the survey responses that will ultimately
    * trigger events based on form submissions.
    */
-  spreadsheetIdToAttachTo: '1sX0Xk9B_ngVOCGc_wwWBvg4g-AdfBjv0dC7xEHnUdV4',
+  spreadsheetIdToAttachTo: '1Fnfy4K1EHsmIA5ncD6MvJbd_l35Hcfsogq0_JmVGqAU',
 
   /**
    * Column key to store the unique identifier of each submission.
@@ -49,8 +44,8 @@ function onSurveySubmission(e) {
   Main.SubmissionHandler.handleSurveySubmission();
 }
 
-function generateMetaDataSheet() {
-  Main.UIHandler.generateMetaDataSheet();
+function generateAggregateSheet() {
+  Main.UIHandler.generateAggregateSheet();
 }
 
 var Main = Main || {};
@@ -63,8 +58,10 @@ Main.SubmissionHandler = (function () {
     var masterSheet = currentSpreadSheet.getSheets()[0];
     UUIDGenerator.populateAnyMissingValuesInTheUUIDColumn(masterSheet);
 
+    var allAvailableCategories = Model.CategoryFactory.createAllCategories();
+
     var processedMasterSheet = DataProcessing.SpreadsheetSplitter.splitSpreadsheetByCategories(
-      masterSheet);
+      masterSheet, allAvailableCategories);
     DataProcessing.CategorySpecificSpreadsheetPopulator.populateCategorySpecificSpreadsheets(
       processedMasterSheet);
     DataProcessing.ExportedColumnPopulator.populateExportedColumn(processedMasterSheet);
@@ -84,35 +81,50 @@ Main.UIHandler = (function () {
    * @private
    */
   var _createMenus = function (spreadsheet) {
+    var menuText = 'Nav Survey Actions';
+    spreadsheet.removeMenu(menuText);
     var menus = [];
 
-    if (spreadsheet.getSheetByName('METADATA') == null) {
-      menus.push({ name: 'Generate METADATA sheet', functionName: 'generateMetaDataSheet' });
+    if (spreadsheet.getSheetByName('aggregate-sheet') == null) {
+      menus.push({ name: 'Create Aggregate Sheet', functionName: 'generateAggregateSheet' });
+    } else {
+      menus.push({ name: 'Update Aggregate Sheet', functionName: 'generateAggregateSheet' });
     }
 
-    spreadsheet.addMenu('Nav Survey Actions', menus);
+    spreadsheet.addMenu(menuText, menus);
   };
 
-  var _generateMetaDataSheet = function () {
+  var _generateAggregateSheet = function () {
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var masterSheet = spreadsheet.getSheets()[0];
+    var aggregateSheet = spreadsheet.getSheetByName('aggregate-sheet');
+    if (aggregateSheet === null) {
+      aggregateSheet = spreadsheet.insertSheet('aggregate-sheet', spreadsheet.getNumSheets());
+    }
 
-    var form = FormApp.openByUrl(spreadsheet.getFormUrl());
-    var metadataSheet = spreadsheet.insertSheet('METADATA', spreadsheet.getNumSheets());
-    metadataSheet.appendRow(['current-step', 'METADATA-GENERATED'])
-                 .appendRow(['spreadsheet-id', spreadsheet.getId()])
-                 .appendRow(['spreadsheet-url', spreadsheet.getUrl()])
-                 .appendRow(['form-id', form.getId()])
-                 .appendRow(['form-published-url', form.getPublishedUrl()])
+    var allAvailableCategories = Model.CategoryFactory.createAllCategories();
+    Model.CategoryFactory.associateSpreadsheetsToAllCategories(allAvailableCategories, masterSheet);
 
-    _resizeAllColumns(metadataSheet);
+    var firstCategoryHeaders = SheetUtility.getColumnTitlesAsArray(
+      allAvailableCategories[0].spreadsheet.getSheets()[0]);
+    var allValues = [];
+    allValues.push(firstCategoryHeaders);
 
-    SpreadsheetApp.getUi()
-                  .alert('METADATA sheet has been created.  Please fill out any blank values in '
-                         + 'column b based on the provided key in column a. \n\n'
-                         + 'NOTE: do not edit column A. \n\n'
-                         + 'Also, the  "Nav Survey Actions" menu has been updated.  '
-                         + 'Once values have been filled out, see the menu for additional '
-                         + 'actions.');
+    for (var i = 0; i < allAvailableCategories.length; i++) {
+      var categorySheetData = SheetUtility.getSheetData(
+        allAvailableCategories[i].spreadsheet.getSheets()[0]);
+
+      for (var j = 0; j < categorySheetData.length; j++) {
+        allValues.push(categorySheetData[j]);
+      }
+    }
+
+    aggregateSheet.clearContents();
+    aggregateSheet.getRange(1, 1, allValues.length, firstCategoryHeaders.length)
+                  .setValues(allValues);
+    _resizeAllColumns(aggregateSheet);
+
+    Main.UIHandler.createMenus(spreadsheet);
   };
 
   /**
@@ -130,6 +142,6 @@ Main.UIHandler = (function () {
 
   return {
     createMenus: _createMenus,
-    generateMetaDataSheet: _generateMetaDataSheet
+    generateAggregateSheet: _generateAggregateSheet
   };
 })();

@@ -28,9 +28,9 @@ Test.CategorySpecificSpreadsheetPopulatorTest = (function () {
     var dataToExport = [allData[1], allData[2]];
     var headers = allData[0];
 
-    var category = 'a';
-    var categorySpecificSpreadsheet = new Model.CategorySpecificSpreadsheet(category, testFolder,
-      headers);
+    var category = { categoryName: 'a' };
+    var categorySpecificSpreadsheet = new Model.CategorySpecificSpreadsheet(category.categoryName,
+      testFolder, headers);
 
     try {
       var processedMasterSheet = new Model.ProcessedMasterSheet({ a: categorySpecificSpreadsheet },
@@ -57,9 +57,9 @@ Test.CategorySpecificSpreadsheetPopulatorTest = (function () {
     var dataToExport = [allData[3], allData[4]];
     var headers = allData[0];
 
-    var category = 'b';
-    var categorySpecificSpreadsheet = new Model.CategorySpecificSpreadsheet(category, testFolder,
-      headers);
+    var category = { categoryName: 'b' };
+    var categorySpecificSpreadsheet = new Model.CategorySpecificSpreadsheet(category.categoryname,
+      testFolder, headers);
 
     try {
       var processedMasterSheet = new Model.ProcessedMasterSheet({ b: categorySpecificSpreadsheet },

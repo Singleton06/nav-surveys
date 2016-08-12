@@ -32,7 +32,8 @@ DataProcessing.CategorySpecificSpreadsheetPopulator = (function () {
   var _populateCategorySpecificSpreadsheets = function (processedMasterSheet) {
     Logger.log('Entered _populateCategorySpecificSpreadsheets');
     processedMasterSheet.categories.forEach(function (category) {
-      var categorySpecificSheet = processedMasterSheet.categorySpecificSpreadsheets[category];
+      var categorySpecificSheet =
+        processedMasterSheet.categorySpecificSpreadsheets[category.categoryName];
 
       if (categorySpecificSheet === undefined || categorySpecificSheet.dataToExport === []) {
         return;

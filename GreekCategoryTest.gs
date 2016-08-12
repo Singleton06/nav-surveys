@@ -15,21 +15,21 @@ Test.GreekCategoryTest = (function () {
     var nonGreekSophomore = ['no', 'val1', 'Hall', 'Sophomore'];
     var nonGreekFreshman = ['no', 'val1', 'Hall', 'Freshman'];
 
-    var GreekCategory = new Model.GreekCategory(name);
+    var greekCategory = new Model.GreekCategory(name);
 
-    var matchingValueResult = GreekCategory.matches(headers, greekSophomore);
+    var matchingValueResult = greekCategory.matches(headers, greekSophomore);
     Assert.equal(matchingValueResult, true);
 
-    var nonMatchingFreshmanResult = GreekCategory.matches(headers, greekFreshman);
+    var nonMatchingFreshmanResult = greekCategory.matches(headers, greekFreshman);
     Assert.equal(nonMatchingFreshmanResult, false);
 
-    var nonGreekSophomoreResult = GreekCategory.matches(headers, nonGreekSophomore);
+    var nonGreekSophomoreResult = greekCategory.matches(headers, nonGreekSophomore);
     Assert.equal(nonGreekSophomoreResult, false);
 
-    var nonGreekFreshmanResult = GreekCategory.matches(headers, nonGreekFreshman);
+    var nonGreekFreshmanResult = greekCategory.matches(headers, nonGreekFreshman);
     Assert.equal(nonGreekFreshmanResult, false);
 
-    var greekSeniorResult = GreekCategory.matches(headers, greekSenior);
+    var greekSeniorResult = greekCategory.matches(headers, greekSenior);
     Assert.equal(greekSeniorResult, true);
   };
 

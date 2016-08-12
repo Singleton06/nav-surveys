@@ -23,7 +23,6 @@ Test.MasterSheetTest = (function () {
     Assert.equal(masterSheet.allData, expectedData);
     Assert.equal(masterSheet.headers, ['Header1', 'Header2']);
     Assert.equal(masterSheet.exportedColumnIndex, -1);
-    Assert.equal(masterSheet.splittingColumnIndex, -1);
   };
 
   var _testConstructorSheetWithoutData = function () {
@@ -41,7 +40,6 @@ Test.MasterSheetTest = (function () {
     Assert.equal(masterSheet.allData, expectedData);
     Assert.equal(masterSheet.headers, ['Header1', 'Header2']);
     Assert.equal(masterSheet.exportedColumnIndex, -1);
-    Assert.equal(masterSheet.splittingColumnIndex, -1);
   };
 
   var _testConstructorNoHeaderNoData = function () {
@@ -59,13 +57,11 @@ Test.MasterSheetTest = (function () {
     Assert.equal(masterSheet.allData, expectedData);
     Assert.equal(masterSheet.headers, []);
     Assert.equal(masterSheet.exportedColumnIndex, -1);
-    Assert.equal(masterSheet.splittingColumnIndex, -1);
   };
 
   var _testConstructorUUIDAndSplittingColumn = function () {
     var expectedData = [['TestData1Col1', 'TestData1Col2', 'TestData1Col3']];
-    var expectedHeaders = ['Header1', GlobalConfig.exportedColumnKey,
-      GlobalConfig.splittingColumnKey];
+    var expectedHeaders = ['Header1', GlobalConfig.exportedColumnKey, 'Header3'];
 
     var masterSheet = new Model.MasterSheet(sheetWithUUIDAndSplittingColumn);
 
@@ -79,7 +75,6 @@ Test.MasterSheetTest = (function () {
     Assert.equal(masterSheet.allData, expectedData);
     Assert.equal(masterSheet.headers, expectedHeaders);
     Assert.equal(masterSheet.exportedColumnIndex, 1);
-    Assert.equal(masterSheet.splittingColumnIndex, 2);
   };
 
   return {

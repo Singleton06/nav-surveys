@@ -1,14 +1,5 @@
-console.log('testing');
-[[]].forEach(function (item, index)
-{
-  console.log(item + ' ' + index);
-});
+var arr = [];
+var arr1 = [['val1', 'val2'], ['val3', 'val4']];
+var arr2 = [['val5', 'val6'], ['val7', 'val8']];
 
-var dataToExport = [['Header1', 'UUID', 'Hall'],
-  ['col1Value1', 'col2Value1', 'a'],
-  ['col1Value2', 'col2Value2', 'a']];
-var headers = dataToExport[0];
-var allData = [dataToExport[1], dataToExport[2]];
-
-console.log(headers);
-console.log(allData);
+console.log(arr.concat(arr1).concat(arr2));

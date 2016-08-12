@@ -6,17 +6,30 @@ var DataProcessing = DataProcessing || {};
  */
 DataProcessing.SpreadsheetSplitter = (function () {
 
+  var _getFirstCategoryThatMatches = function (allAvailableCategories, headers, currentRow) {
+    for (var i = 0; i < allAvailableCategories.length; i++) {
+      if (allAvailableCategories[i].matches(headers, currentRow)) {
+        return allAvailableCategories[i];
+      }
+    }
+
+    return null;
+  };
+
   /**
    * Splits the provided data into separate subsheets based on the specified categories.
    *
    * @param {GoogleAppsScript.Spreadsheet.Sheet} masterSheet the master sheet containing all of the
    *   data that will be split into multiple category specific sheets.  Note that this method will
    *   not change data in the masterSheet, but may add additional columns for tracking purposes.
+   * @param {Object[]} allAvailableCategories
+   *   Specifies all of the available categories to determine if the row within the master sheet
+   *   will match the categories criteria.
    *
    * @returns {Model.ProcessedMasterSheet} a processed master sheet containing all of the
    *   information needed to export the data from the master sheet.
    */
-  var _splitSpreadsheetsByCategories = function (masterSheet) {
+  var _splitSpreadsheetsByCategories = function (masterSheet, allAvailableCategories) {
     _createExportedColumnIfMissing(masterSheet);
     var masterSheetData = new Model.MasterSheet(masterSheet);
     Utility.Debugger.debug('All master sheet data to be processed ' + masterSheetData.allData);
@@ -28,22 +41,23 @@ DataProcessing.SpreadsheetSplitter = (function () {
     var lastExportedRowIndex = -1;
 
     masterSheetData.allData.forEach(function (currentRow, currentRowIndex) {
-      var currentRowCategory = String(currentRow[masterSheetData.splittingColumnIndex]);
-      Utility.Debugger.debug(
-        'Current Row: ' + currentRow + ' with detected category ' + currentRowCategory);
-      if (currentRowCategory === '') {
-        return;
-      }
 
       if (!currentRow[masterSheetData.exportedColumnIndex]) {
-        if (categorySpecificSpreadsheets[currentRowCategory] === undefined) {
-          allCategoriesForExporting.push(currentRowCategory);
-          categorySpecificSpreadsheets[currentRowCategory] =
-            new Model.CategorySpecificSpreadsheet(currentRowCategory, masterSheetData.parentFolder,
-              categorySpecificSpreadsheetHeaders);
+        var categoryForRow = _getFirstCategoryThatMatches(allAvailableCategories,
+                                                          masterSheetData.headers, currentRow);
+        if (categoryForRow === null) {
+          return;
         }
 
-        categorySpecificSpreadsheets[currentRowCategory].dataToExport.push(
+        if (categorySpecificSpreadsheets[categoryForRow.categoryName] === undefined) {
+          allCategoriesForExporting.push(categoryForRow);
+
+          categorySpecificSpreadsheets[categoryForRow.categoryName] =
+            new Model.CategorySpecificSpreadsheet(categoryForRow.categoryName,
+              masterSheetData.parentFolder, categorySpecificSpreadsheetHeaders);
+        }
+
+        categorySpecificSpreadsheets[categoryForRow.categoryName].dataToExport.push(
           currentRow.filter(function (element, index) {
             return index !== masterSheetData.exportedColumnIndex;
           }));

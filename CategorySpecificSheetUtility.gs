@@ -1,31 +1,6 @@
-var Model = Model || {};
+var Utility = Utility || {};
 
-/**
- * Model object representing a spreadsheet's data that is specific to a single category.  This
- * sheet can be used to contain information that will at a later time be added to this specific
- * sheet.
- *
- * @param {String} category The category name that the category specific spreadsheet pertains to.
- * @param {GoogleAppsScript.Drive.Folder} parentFolder the parent folder that should contain the
- *   spreadsheet.
- * @param {String[]} headers the headers that the category specific spreadsheet should contain.
- * @constructor
- */
-Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
-  Utility.Debugger.debug('CategorySpecificSpreadsheet constructor called with values: category: ['
-                         + category + '] parentFolder with name: [' + parentFolder.getName()
-                         + '] headers: [' + headers + ']');
-
-  /**
-   * Constructs the spreadsheet name that will be used specifically for this category.
-   *
-   * @param {string} spreadsheetCategoryName The category name of the spreadsheet.
-   * @returns {string} The full name of the spreadsheet that should be used for this category.
-   * @private
-   */
-  var _constructCategorySpreadsheetName = function (spreadsheetCategoryName) {
-    return spreadsheetCategoryName + GlobalConfig.categorySpecificSpreadsheetSuffix;
-  };
+Utility.CategorySpecificSpreadsheetUtility = (function () {
 
   /**
    * Retrieves the existing spreadsheet based on th e provided parent folder and spreadsheet name.
@@ -52,6 +27,17 @@ Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
     }
 
     return null;
+  };
+
+  /**
+   * Constructs the spreadsheet name that will be used specifically for this category.
+   *
+   * @param {string} spreadsheetCategoryName The category name of the spreadsheet.
+   * @returns {string} The full name of the spreadsheet that should be used for this category.
+   * @private
+   */
+  var _constructCategorySpreadsheetName = function (spreadsheetCategoryName) {
+    return spreadsheetCategoryName + GlobalConfig.categorySpecificSpreadsheetSuffix;
   };
 
   /**
@@ -115,27 +101,26 @@ Model.CategorySpecificSpreadsheet = function (category, parentFolder, headers) {
   };
 
   /**
-   * The category name that the category specific spreadsheet pertains to.
+   * Takes the headers from the master sheet and pulls out the relevant headers for category
+   * specific spreadsheets.
    *
-   * @type {String}
+   * @param {Array} masterSheetHeaders the headers that show up in the master.  This array is not
+   *   modified.
+   * @private
    */
-  this.category = category;
+  var _getCategorySpecificSpreadsheetHeaders = function (masterSheetHeaders) {
+    return masterSheetHeaders.filter(function (element) {
+      return element !== GlobalConfig.exportedColumnKey;
+    });
+  };
 
-  /**
-   * The spreadsheet that is supposed to contain the category specific information.  Note that this
-   * does not necessarily mean at this point that the spreadsheet contains any category specific
-   * information yet.  It could be empty.
-   *
-   * @type {GoogleAppsScript.Spreadsheet.Spreadsheet}
-   */
-  this.spreadsheet = _retrieveCategorySpecificSpreadsheet(category, parentFolder, headers);
+  return {
+    constructCategorySpreadsheetName: _constructCategorySpreadsheetName,
+    removeAllParentFoldersFromSpreadsheet: _removeAllParentFoldersFromSpreadsheet,
+    createNewSpreadsheet: _createNewSpreadsheet,
+    retrieveCategorySpecificSpreadsheet: _retrieveCategorySpecificSpreadsheet,
+    getExistingSpreadsheet: _getExistingSpreadsheet,
+    getCategorySpecificSpreadsheetHeaders: _getCategorySpecificSpreadsheetHeaders
+  };
 
-  /**
-   * An array of all of the data that will need to be exported.  This will start off as an empty
-   * array, but can be used as a place to collection information specific to this cateogry
-   * that can be added to the spreadsheet.
-   *
-   * @type {Object[]}
-   */
-  this.dataToExport = [];
-};
+})();

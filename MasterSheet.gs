@@ -114,14 +114,6 @@ Model.MasterSheet = function (masterSheet) {
   this.headers = SheetUtility.getColumnTitlesAsArray(masterSheet);
 
   /**
-   * Represents the column index that mathces the application's configured column to split data
-   * on.  This value will be 0 based.
-   *
-   * @type {number}
-   */
-  this.splittingColumnIndex = this.headers.indexOf(GlobalConfig.splittingColumnKey);
-
-  /**
    * Represents the exported column index, which is used for determining whether or not a submission
    * within the master sheet has already been exported into sub-sheets.  This value will be 0 based.
    *

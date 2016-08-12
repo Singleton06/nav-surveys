@@ -67,4 +67,82 @@ var SheetUtility = {
     lastColumn++;
     sheet.getRange(1, lastColumn, 1, 1).setValue(columnName);
   },
+
+  /**
+   * Finds the parent folder of the master spreadsheet.  If the master spreadsheet has more than
+   * one parent, this method will throw an error because it does not know which folder to consider
+   * the parent.
+   *
+   * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} masterSpreadsheetToGetParentFrom the master
+   *   spreadsheet.
+   * @returns {GoogleAppsScript.Drive.Folder} the parent folder of the provided master spreadsheet.
+   * @private
+   */
+  getParentFolderOfSpreadsheet: function (spreadsheetToGetParentFrom) {
+    var parentFoldersIterator = DriveApp.getFileById(
+      spreadsheetToGetParentFrom.getId()).getParents();
+
+    if (!parentFoldersIterator.hasNext()) {
+      throw 'Could not find parent folder for spreadsheet ' +
+      spreadsheetToGetParentFrom.getName()
+      + ', is it in a directory?';
+    }
+
+    var parentFolder = parentFoldersIterator.next();
+    if (parentFoldersIterator.hasNext()) {
+      throw 'Multiple parent folders found for spreadsheet '
+      + spreadsheetToGetParentFrom.getName()
+      + ', parent folder to use to create other spreadsheets could not be determined '
+      + '(given there should only be one parent folder)';
+    }
+
+    return parentFolder;
+  },
+
+  /**
+   * Retrieves all data from the sheet, excluding the headers as a two
+   * dimensional array of values.
+   *
+   * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet The sheet to pull all of the
+   *                                                        data from.
+   * @returns {Object[][]} all of the data contained in the master sheet.
+   * @private
+   */
+  getSheetData: function (sheet) {
+    var lastColumn = sheet.getLastColumn();
+    var lastRow = sheet.getLastRow();
+
+    // if the last column is 0, it means there are now columns.  If lastRow is 1, then
+    // that means there is no data, there is only the headers.
+    if (lastColumn === 0 || lastRow === 1) {
+      return [];
+    }
+
+    /*
+     * Here we want to substract 1 from the number of rows to retrive (IMPORTANT: the third argument
+     * to get range is not the ending row to retrieve, but rather the number of rows to retrieve).
+     *
+     * Consider the following example:
+     *
+     * Sheet total rows: 2
+     * Sheet header row: row 1
+     * Sheet data row: row 2
+     * Rows to retrieve: 1
+     *
+     * So we should call:
+     * sheet.getRange(2, 1, 1, <column count>)
+     *
+     * Another example:
+     *
+     * Sheet total rows: 10
+     * Sheet header row: row 1
+     * Sheet data row: row 2 - 10
+     * Rows to retrieve: 9
+     *
+     * So we should call:
+     * sheet.getRange(2, 1, 9, <column count>)
+     */
+    return sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+  },
+
 };
