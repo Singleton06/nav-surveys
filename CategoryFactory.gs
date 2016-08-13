@@ -15,14 +15,21 @@ Model.CategoryFactory = (function () {
           element.categoryName,
           parentFolder,
           categorySpecificHeaders);
+
     });
+
+    // HIDE
+    // Q - S
+    // 17, 18, 19
+    // Z - AC
+    // 26, 27, 28, 29
 
   };
 
   var _createAllCategories = function () {
     var categories = [];
-    categories.push(new Model.GreekCategory('Greek'));
     categories.push(new Model.MarchingBandCategory('MarchingBand'));
+    categories.push(new Model.GreekCategory('Greek'));
     categories.push(new Model.ResidenceHallCategory('Buchanan', ['Buchanan']));
     categories.push(new Model.ResidenceHallCategory('Eaton/Martin', ['Eaton', 'Martin']));
     categories.push(new Model.ResidenceHallCategory('Elm/Oak', ['Elm', 'Oak']));

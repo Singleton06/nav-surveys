@@ -145,4 +145,17 @@ var SheetUtility = {
     return sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
   },
 
+  /**
+   * Auto-resizes all columns on the specified sheet.
+   *
+   * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+   *      The sheet to resize all columns on.
+   * @private
+   */
+  resizeAllColumns: function (sheet) {
+    for (var i = 1; i <= sheet.getLastColumn(); i++) {
+      sheet.autoResizeColumn(i);
+    }
+  },
+
 };

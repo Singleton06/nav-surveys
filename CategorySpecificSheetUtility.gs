@@ -70,10 +70,15 @@ Utility.CategorySpecificSpreadsheetUtility = (function () {
    */
   var _createNewSpreadsheet = function (parentFolder, spreadsheetName, headers) {
     var newSpreadsheet = SpreadsheetApp.create(spreadsheetName);
+    var dataSheet = newSpreadsheet.getSheets()[0].setName('Data');
 
     _removeAllParentFoldersFromSpreadsheet(newSpreadsheet);
     parentFolder.addFile(DriveApp.getFileById(newSpreadsheet.getId()));
     newSpreadsheet.appendRow(headers);
+
+    SheetUtility.resizeAllColumns(dataSheet);
+    dataSheet.hideColumns(17, 3);
+    dataSheet.hideColumns(29);
 
     return newSpreadsheet;
   };

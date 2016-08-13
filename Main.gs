@@ -48,6 +48,38 @@ function generateAggregateSheet() {
   Main.UIHandler.generateAggregateSheet();
 }
 
+function exportResults() {
+  Main.SubmissionHandler.handleSurveySubmission();
+}
+
+function copySheetToCategorySpecificSheets(sheetName, shouldHideSheet) {
+  var originalSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var masterSheet = spreadsheet.getSheets()[0];
+  var allAvailableCategories = Model.CategoryFactory.createAllCategories();
+  Model.CategoryFactory.associateSpreadsheetsToAllCategories(allAvailableCategories, masterSheet);
+  allAvailableCategories.forEach(function (element) {
+    var existingReportSheet = element.spreadsheet.getSheetByName(sheetName);
+    if (existingReportSheet !== null) {
+      element.spreadsheet.deleteSheet(existingReportSheet);
+    }
+
+    var copiedSheet = originalSheet.copyTo(element.spreadsheet).setName(sheetName);
+
+    if (shouldHideSheet) {
+      copiedSheet.hideSheet();
+    }
+  });
+}
+
+function copyReportToSubsheets() {
+  copySheetToCategorySpecificSheets('Report', false);
+}
+
+function copyLeadershipCommunityToSubsheets() {
+  copySheetToCategorySpecificSheets('LeadershipCommunity', true);
+}
+
 var Main = Main || {};
 
 Main.SubmissionHandler = (function () {
@@ -91,6 +123,14 @@ Main.UIHandler = (function () {
       menus.push({ name: 'Update Aggregate Sheet', functionName: 'generateAggregateSheet' });
     }
 
+    menus.push(null);
+    menus.push({ name: 'Copy Report To Category Sheets', functionName: 'copyReportToSubsheets' });
+    menus.push({ name: 'Copy LeadershipCommunity to Category Sheets',
+      functionName: 'copyLeadershipCommunityToSubsheets' });
+
+    menus.push(null);
+    menus.push({ name: 'Re-Export Results', functionName: 'exportResults' });
+
     spreadsheet.addMenu(menuText, menus);
   };
 
@@ -102,6 +142,7 @@ Main.UIHandler = (function () {
       aggregateSheet = spreadsheet.insertSheet('aggregate-sheet', spreadsheet.getNumSheets());
     }
 
+    UUIDGenerator.populateAnyMissingValuesInTheUUIDColumn(masterSheet);
     var allAvailableCategories = Model.CategoryFactory.createAllCategories();
     Model.CategoryFactory.associateSpreadsheetsToAllCategories(allAvailableCategories, masterSheet);
 
@@ -122,22 +163,8 @@ Main.UIHandler = (function () {
     aggregateSheet.clearContents();
     aggregateSheet.getRange(1, 1, allValues.length, firstCategoryHeaders.length)
                   .setValues(allValues);
-    _resizeAllColumns(aggregateSheet);
 
     Main.UIHandler.createMenus(spreadsheet);
-  };
-
-  /**
-   * Auto-resizes all columns on the specified sheet.
-   *
-   * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
-   *      The sheet to resize all columns on.
-   * @private
-   */
-  var _resizeAllColumns = function (sheet) {
-    for (var i = 1; i <= sheet.getLastColumn(); i++) {
-      sheet.autoResizeColumn(i);
-    }
   };
 
   return {
