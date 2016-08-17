@@ -17,13 +17,6 @@ Model.CategoryFactory = (function () {
           categorySpecificHeaders);
 
     });
-
-    // HIDE
-    // Q - S
-    // 17, 18, 19
-    // Z - AC
-    // 26, 27, 28, 29
-
   };
 
   var _createAllCategories = function () {

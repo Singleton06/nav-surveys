@@ -23,12 +23,17 @@ DataProcessing.CategorySpecificSpreadsheetPopulator = (function () {
 
   var _setFormulasForData = function (sheet, dataToExport) {
     var formulaBaseRowIndex = sheet.getLastRow() + 1;
+    var followUpTypeIndex = 20;
     var lcStudyLeaderIndex = 25;
     var regionIndex = 26;
     var ministryAreaIndex = 27;
 
     dataToExport.forEach(function (row, index) {
       var formulaRowIndex = formulaBaseRowIndex + index;
+
+      row[followUpTypeIndex] = '= if(Q' + formulaRowIndex + '="yes", "Bridge, ", "") & '
+        + 'if(R' + formulaRowIndex + '="yes", "BS, ", "") & if(S' +
+        formulaRowIndex + '="yes", "E-List, ", "")';
       row[lcStudyLeaderIndex] =
         '=iferror(VLOOKUP(V' + formulaRowIndex + ', LeadershipCommunity!A2:F, 4), "")';
       row[regionIndex] =
@@ -47,7 +52,6 @@ DataProcessing.CategorySpecificSpreadsheetPopulator = (function () {
    * @private
    */
   var _populateCategorySpecificSpreadsheets = function (processedMasterSheet) {
-    Logger.log('Entered _populateCategorySpecificSpreadsheets');
     processedMasterSheet.categories.forEach(function (category) {
       var categorySpecificSheet =
         processedMasterSheet.categorySpecificSpreadsheets[category.categoryName];

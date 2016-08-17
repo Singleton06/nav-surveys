@@ -56,6 +56,15 @@ Utility.CategorySpecificSpreadsheetUtility = (function () {
     }
   };
 
+  var _getColumnHeaderWeights = function (headers) {
+    var columnHeaderWeights = [];
+    for (var i = 0; i < headers.length; i++) {
+      columnHeaderWeights.push('bold');
+    }
+
+    return columnHeaderWeights;
+  };
+
   /**
    * Creates a new spreadsheet in the specified folder with the given name and the starting
    * headers.
@@ -76,9 +85,18 @@ Utility.CategorySpecificSpreadsheetUtility = (function () {
     parentFolder.addFile(DriveApp.getFileById(newSpreadsheet.getId()));
     newSpreadsheet.appendRow(headers);
 
-    SheetUtility.resizeAllColumns(dataSheet);
     dataSheet.hideColumns(17, 3);
-    dataSheet.hideColumns(29);
+    dataSheet.hideColumns(26, 4);
+
+    dataSheet.getRange('V:V').setBackground('#c9daf8');
+    dataSheet.getRange('W:Y').setBackground('#f9cb9c');
+    dataSheet.getRange('Z:AB').setBackground('#d0e0e3');
+
+    dataSheet.setFrozenColumns(3);
+    dataSheet.setFrozenRows(1);
+
+    var fontWeights = _getColumnHeaderWeights(headers);
+    dataSheet.getRange(1, 1, 1, dataSheet.getLastColumn()).setFontWeights([fontWeights]);
 
     return newSpreadsheet;
   };

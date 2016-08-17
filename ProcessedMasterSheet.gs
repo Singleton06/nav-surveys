@@ -24,7 +24,7 @@ var Model = Model || {};
 Model.ProcessedMasterSheet = function (categorySpecificSpreadsheets, categories,
                                        lastProcessedRowIndex, masterSheet) {
   this.categorySpecificSpreadsheets = categorySpecificSpreadsheets;
-  this.lastProcessedRowIndex = lastProcessedRowIndex;
   this.categories = categories;
+  this.lastProcessedRowIndex = lastProcessedRowIndex;
   this.masterSheet = masterSheet;
 };
