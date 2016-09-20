@@ -43,6 +43,11 @@ function debug() {
   onSurveySubmission({ range: range });
 }
 
+function debugGenerateAggregateSheet() {
+  var currentSpreadSheet = SpreadsheetApp.openById(GlobalConfig.spreadsheetIdToAttachTo);
+  Main.UIHandler.generateAggregateSheet(currentSpreadSheet);
+}
+
 /**
  * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} e.source the spreadsheet that was opened.
  */
@@ -55,7 +60,7 @@ function onSurveySubmission(e) {
 }
 
 function generateAggregateSheet() {
-  Main.UIHandler.generateAggregateSheet();
+  Main.UIHandler.generateAggregateSheet(SpreadsheetApp.getActiveSpreadsheet());
 }
 
 function exportResults() {
@@ -78,6 +83,8 @@ function copySheetToCategorySpecificSheets(sheetName, shouldHideSheet) {
 
     if (shouldHideSheet) {
       copiedSheet.hideSheet();
+    } else {
+      copiedSheet.showSheet();
     }
   });
 }
@@ -284,9 +291,8 @@ Main.UIHandler = (function () {
     spreadsheet.addMenu(menuText, menus);
   };
 
-  var _generateAggregateSheet = function () {
-    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    var masterSheet = spreadsheet.getSheets()[0];
+  var _generateAggregateSheet = function (spreadsheet) {
+    var masterSheet = spreadsheet.getSheetByName('Data');
     var aggregateSheet = spreadsheet.getSheetByName('Aggregate');
     if (aggregateSheet === null) {
       aggregateSheet = spreadsheet.insertSheet('Aggregate', spreadsheet.getNumSheets());
@@ -297,13 +303,13 @@ Main.UIHandler = (function () {
     Model.CategoryFactory.associateSpreadsheetsToAllCategories(allAvailableCategories, masterSheet);
 
     var firstCategoryHeaders = SheetUtility.getColumnTitlesAsArray(
-      allAvailableCategories[0].spreadsheet.getSheets()[0]);
+      allAvailableCategories[0].spreadsheet.getSheetByName('Data'));
     var allValues = [];
     allValues.push(firstCategoryHeaders);
 
     for (var i = 0; i < allAvailableCategories.length; i++) {
       var categorySheetData = SheetUtility.getSheetData(
-        allAvailableCategories[i].spreadsheet.getSheets()[0]);
+        allAvailableCategories[i].spreadsheet.getSheetByName('Data'));
 
       for (var j = 0; j < categorySheetData.length; j++) {
         allValues.push(categorySheetData[j]);
@@ -317,7 +323,19 @@ Main.UIHandler = (function () {
       SheetUtility.createColumn(masterSheet, GlobalConfig.exportedColumnKey);
     }
 
-    Main.UIHandler.createMenus(spreadsheet);
+    aggregateSheet.setFrozenRows(1);
+    aggregateSheet.setFrozenColumns(4);
+
+    aggregateSheet.hideColumns(17, 3);
+    aggregateSheet.hideColumns(26, 4);
+
+    aggregateSheet.getRange('V:V').setBackground('#c9daf8');
+    aggregateSheet.getRange('W:Y').setBackground('#f9cb9c');
+    aggregateSheet.getRange('Z:AB').setBackground('#d0e0e3');
+
+    SheetUtility.resizeAllColumns(aggregateSheet);
+
+    return;
   };
 
   return {
